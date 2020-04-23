@@ -1,0 +1,4 @@
+/target
+/bcsv/*.bcsv
+enums.json
+/src/bcsv/defs.rs

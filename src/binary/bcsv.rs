@@ -97,9 +97,10 @@ impl BCSV {
                 offset += fields[0].offset as usize;
             }
             for f in &fields {
-                let data: Vec<u8> = Vec::from(&data[offset..offset+f.size]);
+                let mut v: Vec<u8> = vec![0; f.size];
+                v.clone_from_slice(&data[offset..offset+f.size]);
                 offset += f.size;
-                row.push(data.into_boxed_slice());
+                row.push(v.into_boxed_slice());
             }
             rows.push(Row {entries: row.into_boxed_slice()});
         }

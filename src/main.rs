@@ -10,10 +10,25 @@ mod codegen;
 
 fn main() -> std::io::Result<()> {
     #[cfg(feature = "final")]
-    println!("final");
-    
+    {
+        let data = load_data().unwrap();
+        println!("done");
+    }
+
     #[cfg(feature = "codegen")]
-    codegen::enumgen::gen();
+    codegen::bcsvgen::gen();
     
     Ok(())
+}
+
+#[cfg(feature = "final")]
+struct ACNHData {
+    bcsvs: bcsv::BCSVs
+}
+
+#[cfg(feature = "final")]
+fn load_data() -> Result<ACNHData, String> {
+    Ok(ACNHData {
+        bcsvs: bcsv::BCSVs::load()?
+    })
 }

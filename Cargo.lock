@@ -8,6 +8,7 @@ dependencies = [
  "rmp-serde",
  "serde",
  "serde_json",
+ "zstd",
 ]
 
 [[package]]
@@ -29,6 +30,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08c48aae112d48ed9f069b33538ea9e3e90aa263cfa3d1c24309612b1f7472de"
 
 [[package]]
+name = "cc"
+version = "1.0.52"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c3d87b23d6a92cd03af510a5ade527033f6aa6fa92161e2d5863a907d4c5e31d"
+dependencies = [
+ "jobserver",
+]
+
+[[package]]
 name = "crc"
 version = "1.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -38,10 +48,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "glob"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
+
+[[package]]
 name = "itoa"
 version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b8b7a7c0c47db5545ed3fef7468ee7bb5b74691498139e4b3f6a20685dc6dd8e"
+
+[[package]]
+name = "jobserver"
+version = "0.1.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5c71313ebb9439f74b00d9d2dcec36440beaf57a6aa0623068441dd7cd81a7f2"
+dependencies = [
+ "libc",
+]
+
+[[package]]
+name = "libc"
+version = "0.2.69"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "99e85c08494b21a9054e7fe1374a732aeadaff3980b6990b94bfd3a70f690005"
 
 [[package]]
 name = "num-traits"
@@ -144,3 +175,33 @@ name = "unicode-xid"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "826e7639553986605ec5979c7dd957c7895e93eabed50ab2ffa7f6128a75097c"
+
+[[package]]
+name = "zstd"
+version = "0.5.1+zstd.1.4.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5c5d978b793ae64375b80baf652919b148f6a496ac8802922d9999f5a553194f"
+dependencies = [
+ "zstd-safe",
+]
+
+[[package]]
+name = "zstd-safe"
+version = "2.0.3+zstd.1.4.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bee25eac9753cfedd48133fa1736cbd23b774e253d89badbeac7d12b23848d3f"
+dependencies = [
+ "libc",
+ "zstd-sys",
+]
+
+[[package]]
+name = "zstd-sys"
+version = "1.4.15+zstd.1.4.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "89719b034dc22d240d5b407fb0a3fe6d29952c181cff9a9f95c0bd40b4f8f7d8"
+dependencies = [
+ "cc",
+ "glob",
+ "libc",
+]

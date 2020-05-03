@@ -18,10 +18,11 @@ pub trait BCSVRow {
 
 use std::fs::File;
 use std::io::Read;
+use std::path::Path;
 
-pub fn read_bcsv(filename: &str) -> Result<crate::binary::bcsv::BCSV, String> {
+pub fn read_bcsv<P: AsRef<Path>>(filename: P) -> Result<crate::binary::bcsv::BCSV, String> {
     let mut data = vec!();
-    let mut f = match File::open(filename){
+    let mut f = match File::open(filename) {
         std::io::Result::Ok(f) => f,
         _ => return std::result::Result::Err("FS error".to_owned())
     };

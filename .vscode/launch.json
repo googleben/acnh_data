@@ -6,14 +6,13 @@
     "configurations": [
         {
             "name": "(Windows) Launch",
-            "type": "cppvsdbg",
+            "type": "lldb",
             "request": "launch",
             "program": "${workspaceFolder}/target/debug/acnh_data.exe",
             "args": [],
-            "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false
+            "sourceLanguages": ["rust"],
+            "stopOnEntry": false
         }
     ]
 }

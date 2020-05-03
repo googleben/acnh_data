@@ -1,6 +1,7 @@
 extern crate serde;
 extern crate serde_json;
 extern crate crc;
+extern crate zstd;
 
 pub mod binary;
 pub mod bcsv;
@@ -8,17 +9,15 @@ pub mod bcsv;
 mod codegen;
 
 
-fn main() -> std::io::Result<()> {
+fn main() {
     #[cfg(feature = "final")]
     {
         let data = load_data().unwrap();
         println!("done");
     }
-
+    
     #[cfg(feature = "codegen")]
     codegen::bcsvgen::gen();
-    
-    Ok(())
 }
 
 #[cfg(feature = "final")]

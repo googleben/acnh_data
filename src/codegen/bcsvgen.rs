@@ -24,11 +24,11 @@ pub fn gen() {
     let mut out = out_opt.open(std::path::Path::new("src").join("bcsv").join("defs.rs").with_extension("rs")).unwrap();
     out.write_fmt(format_args!("#![allow(non_camel_case_types, non_snake_case)]\n\n")).unwrap();
     let mut defined_enums = vec!();
-    out.write(b"use crate::bcsv::BCSVRow;\n\n").unwrap();
+    out.write(b"use crate::bcsv::BCSVRow;\nuse std::path::Path;\n").unwrap();
     let empty = HashMap::new();
 
     out.write(b"pub struct BCSVs {\n").unwrap();
-    for dirent in std::fs::read_dir("bcsv").unwrap() {
+    for dirent in std::fs::read_dir(std::path::Path::new("input").join("Bcsv")).unwrap() {
         let dirent = dirent.unwrap();
         if !dirent.file_type().unwrap().is_file() {
             panic!("Expected only files in bcsv dir");
@@ -41,23 +41,23 @@ pub fn gen() {
     }
     out.write(b"}\n\n").unwrap();
 
-    out.write(b"impl BCSVs {\n    pub fn load() -> Result<BCSVs, String> {\n        Ok(BCSVs {\n").unwrap();
-    for dirent in std::fs::read_dir("bcsv").unwrap() {
+    out.write(b"impl BCSVs {\n    pub fn load() -> Result<BCSVs, String> {\n        let dir = Path::new(\"input\").join(\"Bcsv\");\n        Ok(BCSVs {\n").unwrap();
+    for dirent in std::fs::read_dir(std::path::Path::new("input").join("Bcsv")).unwrap() {
         let dirent = dirent.unwrap();
         if !dirent.file_type().unwrap().is_file() {
             panic!("Expected only files in bcsv dir");
         }
         let osfilename = dirent.file_name();
         let filename = osfilename.to_str().unwrap();
-        let ospath = dirent.path().into_os_string();
-        let path = ospath.to_str().unwrap();
+        //let ospath = dirent.path().into_os_string();
+        //let path = ospath.to_str().unwrap();
         
         let struct_name = std::path::Path::new(filename).file_stem().unwrap().to_str().unwrap();
-        out.write_fmt(format_args!("            {0}: {0}Row::make_rows(crate::bcsv::read_bcsv(r#\"{1}\"#)?),\n", struct_name, path)).unwrap();
+        out.write_fmt(format_args!("            {0}: {0}Row::make_rows(crate::bcsv::read_bcsv(dir.join(\"{1}\"))?),\n", struct_name, filename)).unwrap();
     }
     out.write(b"        })\n    }\n}\n\n").unwrap();
     
-    for dirent in std::fs::read_dir("bcsv").unwrap() {
+    for dirent in std::fs::read_dir(std::path::Path::new("input").join("Bcsv")).unwrap() {
         let dirent = dirent.unwrap();
         if !dirent.file_type().unwrap().is_file() {
             panic!("Expected only files in bcsv dir");
@@ -66,7 +66,7 @@ pub fn gen() {
         let filename = osfilename.to_str().unwrap();
         let val = d.get(filename).unwrap_or(&empty);
         let mut data: Vec<u8> = vec!();
-        f = File::open(std::path::Path::new("bcsv").join(filename)).unwrap();
+        f = File::open(std::path::Path::new("input").join("Bcsv").join(filename)).unwrap();
         f.read_to_end(&mut data).unwrap();
         let bcsv = crate::binary::bcsv::BCSV::new(data.into_boxed_slice()).unwrap();
         let struct_name = format!("{}Row", std::path::Path::new(filename).file_stem().unwrap().to_str().unwrap());

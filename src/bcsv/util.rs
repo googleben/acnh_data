@@ -18,7 +18,7 @@ pub fn read_u32(data: &[u8]) -> u32 {
 #[allow(non_snake_case)]
 pub fn read_String(data: &[u8]) -> String {
     match String::from_utf8(data.to_vec()) {
-        Ok(s) => s.trim_end_matches("\0").to_owned(),
-        Err(_) => data.iter().map(|b| format!("\\u{{{0:2X}}}", b).to_owned()).collect()
+        Ok(s) => s.trim_end_matches('\0').to_owned(),
+        Err(_) => data.iter().map(|b| format!("\\u{{{0:2X}}}", b)).collect()
     }
 }

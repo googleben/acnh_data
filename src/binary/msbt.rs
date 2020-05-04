@@ -44,7 +44,7 @@ impl MSBT {
         let header: MSBTHeader;
         {
             let magic = get_utf8_str(&data, offset, 8)?;
-            if &magic != MAGIC { return Err("Incorrect magic number"); }
+            if magic != MAGIC { return Err("Incorrect magic number"); }
             offset += 8;
             let _order_mark = get_u16(&data, offset)?;
             offset += 2;

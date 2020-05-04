@@ -102,7 +102,7 @@ impl SARC {
             
             // the flag 0x01000000 means that the node has a file name in the file name table
             // right now we require all files to have names
-            if file_attrs & 0x01000000 == 0 { return Err("File nodes must have names") }
+            if file_attrs & 0x01_00_00_00 == 0 { return Err("File nodes must have names") }
 
             // the file name is a null-terminated string indexed in the file name table by 
             // the low 16 bits of the attributes; indexing is 4-byte aligned so we multiply by 4
@@ -114,7 +114,7 @@ impl SARC {
             fs_nodes.push(FSNode {file_name_hash, file_name, file_attrs, file_data});
         }
 
-        Ok(SARC {header, fs_header, fs_nodes: fs_nodes})
+        Ok(SARC {header, fs_header, fs_nodes})
     }
 }
 

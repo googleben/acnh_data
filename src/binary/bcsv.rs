@@ -1,14 +1,4 @@
-fn get_u16(data: &Box<[u8]>, offset: usize) -> u16 {
-    (data[offset] as u16) |
-    (data[offset + 1] as u16) << 8
-}
-
-fn get_u32(data: &Box<[u8]>, offset: usize) -> u32 {
-    (data[offset] as u32) | 
-    (data[offset + 1] as u32) << 8 | 
-    (data[offset + 2] as u32) << 16 |
-    (data[offset + 3] as u32) << 24
-}
+use crate::binary::util::*;
 
 #[derive(Debug)]
 pub struct Header {
@@ -17,7 +7,6 @@ pub struct Header {
     pub num_fields: usize,
     pub version: u8,
     pub jp_enum: u8,
-    pub magic: u32,
 }
 
 #[derive(Debug)]
@@ -29,54 +18,50 @@ pub struct FieldInfo {
 
 #[derive(Debug)]
 pub struct Row {
-    pub entries: Box<[Box<[u8]>]>
+    pub entries: Vec<Vec<u8>>
 }
 
 #[derive(Debug)]
 pub struct BCSV {
     pub header: Header,
-    pub fields: Box<[FieldInfo]>,
-    pub data: Box<[Row]>
+    pub fields: Vec<FieldInfo>,
+    pub data: Vec<Row>
 }
 
-//Magic is "VSCB"
-pub const MAGIC: u32 = 0x42435356;
+pub const MAGIC: &str = "VSCB";
 
 impl BCSV {
     
-    pub fn new(data: Box<[u8]>) -> Result<BCSV, String> {
-        //header takes 0x1B bytes
-        if data.len() < 0x1B {
-            return Err("File too small".to_owned());
-        }
+    pub fn new<'a>(data: &[u8]) -> Result<BCSV, &'a str> {
         let header: Header;
         let mut offset = 0;
         {
-            let num_rows = get_u32(&data, offset) as usize;
+            let num_rows = get_u32(data, offset)? as usize;
             offset += 4;
-            let row_size = get_u32(&data, offset);
+            let row_size = get_u32(&data, offset)?;
             offset += 4;
-            let num_fields = get_u16(&data, offset) as usize;
+            let num_fields = get_u16(&data, offset)? as usize;
             offset += 2;
-            let version = data[offset];
+            let version = get_u8(data, offset)?;
             offset += 1;
-            let jp_enum = data[offset];
+            let jp_enum = get_u8(data, offset)?;
             offset += 1;
-            let magic = get_u32(&data, offset);
+            let magic = get_utf8_str(data, offset, 4)?;
+            //no need to increment offset because fields start at 0x1c
             
-            if magic != MAGIC {
-                return Err("Incorrect magic number".to_owned());
+            if magic.as_str() != MAGIC {
+                return Err("Incorrect magic number");
             }
             //no need to increment offset since we set it after this
-            header = Header {num_rows, num_fields, row_size, version, jp_enum, magic};
+            header = Header {num_rows, num_fields, row_size, version, jp_enum};
         }
         //fields always start at 0x1c
         offset = 0x1c;
         let mut fields: Vec<FieldInfo> = Vec::with_capacity(header.num_fields);
         for _ in 0..header.num_fields {
-            let name_hash = get_u32(&data, offset);
+            let name_hash = get_u32(&data, offset)?;
             offset += 4;
-            let field_offset = get_u32(&data, offset);
+            let field_offset = get_u32(&data, offset)?;
             offset += 4;
             fields.push(FieldInfo {name_hash, offset: field_offset, size: 0});
         }
@@ -86,27 +71,30 @@ impl BCSV {
         for i in 0..(header.num_fields-1) {
             fields[i].size = (fields[i+1].offset - fields[i].offset) as usize;
         }
+        //take care of the last header now
         if header.num_fields > 0 {
             fields[header.num_fields-1].size = (header.row_size - fields[header.num_fields-1].offset) as usize;
         }
 
+        // now we read in the actual data
         let mut rows: Vec<Row> = Vec::with_capacity(header.num_rows);
         for _ in 0..header.num_rows {
-            let mut row: Vec<Box<[u8]>> = Vec::with_capacity(header.num_fields);
+            let mut row: Vec<Vec<u8>> = Vec::with_capacity(header.num_fields);
+            // the data may not start at the beginning of the row, so make sure
+            // we're starting where the data starts
             if header.num_fields > 0 {
                 offset += fields[0].offset as usize;
             }
+            
             for f in &fields {
-                let mut v: Vec<u8> = vec![0; f.size];
-                v.clone_from_slice(&data[offset..offset+f.size]);
+                row.push(get_u8_arr(data, offset, f.size)?);
                 offset += f.size;
-                row.push(v.into_boxed_slice());
             }
-            rows.push(Row {entries: row.into_boxed_slice()});
+            rows.push(Row {entries: row});
         }
         
         Ok(BCSV {
-            header, fields: fields.into_boxed_slice(), data: rows.into_boxed_slice()
+            header, fields, data: rows
         })
     }
 }

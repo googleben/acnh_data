@@ -3,7 +3,6 @@ name = "acnh_data"
 version = "0.1.0"
 authors = ["GoogleBen <william.ben.wyatt@gmail.com>"]
 edition = "2018"
-proc-macro = true
 
 [features]
 default = ["final"]

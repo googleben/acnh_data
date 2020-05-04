@@ -37,11 +37,11 @@ pub fn gen() {
         let filename = osfilename.to_str().unwrap();
         
         let struct_name = std::path::Path::new(filename).file_stem().unwrap().to_str().unwrap();
-        out.write_fmt(format_args!("    pub {0}: Box<[{0}Row]>,\n", struct_name)).unwrap();
+        out.write_fmt(format_args!("    pub {0}: Vec<{0}Row>,\n", struct_name)).unwrap();
     }
     out.write(b"}\n\n").unwrap();
 
-    out.write(b"impl BCSVs {\n    pub fn load() -> Result<BCSVs, String> {\n        let dir = Path::new(\"input\").join(\"Bcsv\");\n        Ok(BCSVs {\n").unwrap();
+    out.write(b"impl BCSVs {\n    pub fn load<'a>() -> Result<BCSVs, &'a str> {\n        let dir = Path::new(\"input\").join(\"Bcsv\");\n        Ok(BCSVs {\n").unwrap();
     for dirent in std::fs::read_dir(std::path::Path::new("input").join("Bcsv")).unwrap() {
         let dirent = dirent.unwrap();
         if !dirent.file_type().unwrap().is_file() {
@@ -68,10 +68,10 @@ pub fn gen() {
         let mut data: Vec<u8> = vec!();
         f = File::open(std::path::Path::new("input").join("Bcsv").join(filename)).unwrap();
         f.read_to_end(&mut data).unwrap();
-        let bcsv = crate::binary::bcsv::BCSV::new(data.into_boxed_slice()).unwrap();
+        let bcsv = crate::binary::bcsv::BCSV::new(&data).unwrap();
         let struct_name = format!("{}Row", std::path::Path::new(filename).file_stem().unwrap().to_str().unwrap());
         out.write_fmt(format_args!("pub struct {} {{\n", struct_name)).unwrap();
-        for field in bcsv.fields.into_iter() {
+        for field in bcsv.fields.iter() {
             let hash_str = field.name_hash.to_string();
             if val.contains_key(&hash_str) {
                 out.write_fmt(format_args!("    pub enum_{0}: Enum{0},\n", hash_str)).unwrap();
@@ -87,9 +87,9 @@ pub fn gen() {
         }
         out.write_fmt(format_args!("}}\n\n")).unwrap();
 
-        out.write_fmt(format_args!("impl BCSVRow for {0} {{\n    type T = {0};\n    fn new(data: &Box<[Box<[u8]>]>) -> {0} {{\n        {0} {{\n", struct_name)).unwrap();
+        out.write_fmt(format_args!("impl BCSVRow for {0} {{\n    type T = {0};\n    fn new(data: &Vec<Vec<u8>>) -> {0} {{\n        {0} {{\n", struct_name)).unwrap();
         let mut ind = 0;
-        for field in bcsv.fields.into_iter() {
+        for field in bcsv.fields.iter() {
             let hash_str = field.name_hash.to_string();
             if val.contains_key(&hash_str) {
                 out.write_fmt(format_args!("            enum_{0}: unsafe{{std::mem::transmute_copy::<u32,Enum{0}>(&crate::bcsv::utils::read_u32(&data[{1}]))}},\n", hash_str, ind)).unwrap();

@@ -4,25 +4,26 @@ use crate::binary::util::*;
 
 #[derive(Debug)]
 pub struct MSBTHeader {
-    unk1: u16,
-    unk2: u16,
-    num_sections: u16,
-    unk3: u16,
-    file_size: usize
+    pub unk1: u16,
+    pub unk2: u16,
+    pub num_sections: u16,
+    pub unk3: u16,
+    pub file_size: usize
 }
 
 #[derive(Debug)]
 pub struct MSBT {
-    header: MSBTHeader,
-    label_hash_table: Vec<Vec<Label>>,
-    messages: Vec<String>,
-    attributes: Vec<Vec<u8>>
+    pub header: MSBTHeader,
+    pub label_hash_table: Vec<Vec<Label>>,
+    pub messages: Vec<String>,
+    pub messages_raw: Vec<Vec<u16>>,
+    pub attributes: Vec<Vec<u8>>
 }
 
 #[derive(Debug)]
 pub struct Label {
-    label: String,
-    item_index: u32
+    pub label: String,
+    pub item_index: u32
 }
 
 
@@ -64,6 +65,7 @@ impl MSBT {
         }
         let mut label_hash_table = vec!();
         let mut messages = vec!();
+        let mut messages_raw = vec!();
         let mut attributes = vec!();
         for _ in 0..header.num_sections {
 
@@ -92,6 +94,7 @@ impl MSBT {
                         let mut tmp_offset = sec_start + labels_off;
                         for _ in 0..num_labels {
                             let str_len = get_u8(&data, tmp_offset)? as usize;
+                            tmp_offset += 1;
                             let str = get_utf8_str(&data, tmp_offset, str_len)?;
                             tmp_offset += str_len as usize;
                             let item_index = get_u32(&data, tmp_offset)?;
@@ -108,24 +111,31 @@ impl MSBT {
                         let message_off = get_u32(&data, offset)? as usize;
                         offset += 4;
                         let mut str_raw = vec!();
+                        let mut str_no_esc = vec!();
                         let mut tmp_offset = message_off + sec_start;
                         loop {
                             let ch = get_u16(&data, tmp_offset)?;
                             tmp_offset += 2;
                             if ch == 0 { break }
+                            str_no_esc.push(ch);
                             if ch == 0xE {
                                 push_unicode_escape(&mut str_raw, 0xE);
                                 let fnum = get_u16(&data, tmp_offset)?;
                                 tmp_offset += 2;
                                 push_unicode_escape(&mut str_raw, fnum);
+                                str_no_esc.push(fnum);
                                 let arg1 = get_u16(&data, tmp_offset)?;
                                 tmp_offset += 2;
                                 push_unicode_escape(&mut str_raw, arg1);
+                                str_no_esc.push(arg1);
                                 let num_args = get_u16(&data, tmp_offset)? / 2;
                                 tmp_offset += 2;
                                 push_unicode_escape(&mut str_raw, num_args);
+                                str_no_esc.push(num_args);
                                 for _ in 0..num_args {
-                                    push_unicode_escape(&mut str_raw, get_u16(&data, tmp_offset)?);
+                                    let tmp = get_u16(&data, tmp_offset)?;
+                                    push_unicode_escape(&mut str_raw, tmp);
+                                    str_no_esc.push(tmp);
                                     tmp_offset += 2;
                                 }
                             } else if ch == 0xF {
@@ -133,9 +143,11 @@ impl MSBT {
                                 let fnum = get_u16(&data, tmp_offset)?;
                                 tmp_offset += 2;
                                 push_unicode_escape(&mut str_raw, fnum);
+                                str_no_esc.push(fnum);
                                 let arg1 = get_u16(&data, tmp_offset)?;
                                 tmp_offset += 2;
                                 push_unicode_escape(&mut str_raw, arg1);
+                                str_no_esc.push(arg1);
                             } else {
                                 str_raw.push(ch);
                             }
@@ -145,6 +157,7 @@ impl MSBT {
                             _ => return Err("Invalid UTF-16 in text")
                         };
                         messages.push(str);
+                        messages_raw.push(str_no_esc);
                     }
                 },
                 "ATR1" => {
@@ -161,7 +174,7 @@ impl MSBT {
             }
             offset = sec_start + section_size;
         }
-        Ok(MSBT { header, label_hash_table, messages, attributes })
+        Ok(MSBT { header, label_hash_table, messages, messages_raw, attributes })
     }
 }
 

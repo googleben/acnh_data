@@ -8,7 +8,7 @@ pub fn get_u8<'a>(data: &[u8], offset: usize) -> Result<u8, &'a str> {
 }
 
 pub fn get_u16<'a>(data: &[u8], offset: usize) -> Result<u16, &'a str> {
-    ensure_has(data, offset, 4)?;
+    ensure_has(data, offset, 2)?;
     Ok((data[offset] as u16) |
     (data[offset+1] as u16) << 8)
 }
@@ -30,7 +30,10 @@ pub fn get_utf8_str<'a>(data: &[u8], offset: usize, len: usize) -> Result<String
     ensure_has(data, offset, len)?;
     match String::from_utf8((&data[offset..offset + len]).to_vec()) {
         Ok(s) => Ok(s),
-        _ => Err("")
+        Err(e) => {
+            let s = format!("Invalid UTF-8 {} {:?}", e, &data[offset..offset + len]);
+            Err(Box::leak(s.into_boxed_str()))
+        }
     }
 }
 

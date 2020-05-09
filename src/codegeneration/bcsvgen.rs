@@ -126,11 +126,12 @@ pub fn gen() -> io::Result<()> {
                 v_name = format!("{}_{}", v_type, hash_str);
                 new.line(format!("{}: read_{}(&data[{}]),", v_name, v_type, ind));
             }
-            struct_.field(&v_name, &v_type);
+            struct_.field(&format!("pub {}", &v_name), &v_type);
+            
             ind += 1;
         }
         new.line("}");
-        bcsvs.field(&file_stem, Type::new("Vec").generic(struct_.ty()).clone());
+        bcsvs.field(&format!("pub {}", &file_stem), Type::new("Vec").generic(struct_.ty()).clone());
         bcsvs_load.line(format!("{}: {}::make_rows(read_bcsv(dir.join(\"{}\"))?),", file_stem, struct_name, filename));
         s_impl.push_fn(new);
         impls.push(s_impl);
